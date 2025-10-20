@@ -40,14 +40,13 @@
 </head>
 <body class="bg-gray-200 text-gray-800">
 
-    <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
-        <div class="loader"></div>
-        <p class="mt-4 text-lg brand-blue font-semibold">Loading Leaderboards...</p>
-    </div>
-
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="main-container rounded-2xl shadow-2xl p-6 md:p-8 max-w-7xl mx-auto">
+        <div class="main-container relative rounded-2xl shadow-2xl p-6 md:p-8 max-w-7xl mx-auto">
             
+            <a href="./admin.html" title="Admin Page" class="absolute top-4 right-4 text-gray-400 hover:text-brand-blue transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-4.44a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.38"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+
             <header class="text-center mb-6 border-b pb-6 border-gray-200">
                 <h1 class="text-4xl sm:text-5xl font-bold brand-blue">Funshoot Leaderboard</h1>
                 <p class="text-gray-500 mt-2 text-lg">Hosted by ShootSmart</p>
@@ -207,4 +206,5 @@
     </script>
 </body>
 </html>
+
 

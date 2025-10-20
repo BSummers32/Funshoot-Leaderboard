@@ -54,11 +54,23 @@
                 <h2 class="text-2xl font-bold mb-4 brand-blue" id="form-title">Add New Contestant</h2>
                 <form id="contestant-form">
                     <input type="hidden" id="contestant-id">
-                    <div class="mb-4">
-                        <label for="contestant-name" class="block text-gray-700 text-sm font-bold mb-2">Contestant Name</label>
-                        <input type="text" id="contestant-name" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-1">
+                            <label for="contestant-name" class="block text-gray-700 text-sm font-bold mb-2">Contestant Name</label>
+                            <input type="text" id="contestant-name" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div id="score-inputs-container" class="md:col-span-2 grid grid-cols-2 gap-4 hidden">
+                            <div>
+                                <label for="course1-score" class="block text-gray-700 text-sm font-bold mb-2">Course 1 Score</label>
+                                <input type="number" id="course1-score" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                             <div>
+                                <label for="course2-score" class="block text-gray-700 text-sm font-bold mb-2">Course 2 Score</label>
+                                <input type="number" id="course2-score" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-end gap-4">
+                    <div class="mt-4 flex items-center justify-end gap-4">
                         <button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hidden">Cancel</button>
                         <button type="submit" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg">Save Contestant</button>
                     </div>
@@ -117,6 +129,10 @@
         const deleteModal = document.getElementById('delete-modal');
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         const cancelButtons = document.querySelectorAll('.modal-cancel');
+        const scoreInputsContainer = document.getElementById('score-inputs-container');
+        const course1ScoreInput = document.getElementById('course1-score');
+        const course2ScoreInput = document.getElementById('course2-score');
+
 
         // --- UTILITY FUNCTIONS ---
         function openModal(modal) { modal.classList.remove('hidden'); }
@@ -127,62 +143,13 @@
             contestantIdInput.value = '';
             formTitle.textContent = 'Add New Contestant';
             cancelEditBtn.classList.add('hidden');
+            scoreInputsContainer.classList.add('hidden');
         }
 
         // --- FIREBASE SETUP ---
         async function initializeFirebase() {
-            try {
-                const firebaseConfig = {
-                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
-                  authDomain: "funshoot-leaderboard.firebaseapp.com",
-                  projectId: "funshoot-leaderboard",
-                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
-                  messagingSenderId: "1021423121559",
-                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
-                };
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                const auth = getAuth(app);
-                await signInAnonymously(auth);
-                contestantsCollectionRef = collection(db, "contestants");
-                onSnapshot(contestantsCollectionRef, (snapshot) => {
-                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderContestantList(contestantsCache);
-                });
-            } catch (error) {
-                 console.error("Firebase initialization failed:", error);
-            }
-        }
-
-        // --- RENDER FUNCTION ---
-        function renderContestantList(contestants) {
-            contestantListBody.innerHTML = '';
-            if (!contestants || contestants.length === 0) {
-                contestantListBody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No contestants yet. Add one to get started!</td></tr>`;
-                return;
-            }
-            const sortedContestants = [...contestants].sort((a, b) => a.name.localeCompare(b.name));
-
-            sortedContestants.forEach(c => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200';
-                row.innerHTML = `
-                    <td class="p-3 font-semibold">${c.name}</td>
-                    <td class="p-3 text-center">${c.course1?.total || 0}</td>
-                    <td class="p-3 text-center">${c.course2?.total || 0}</td>
-                    <td class="p-3 text-right">
-                        <button class="edit-btn text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-3 rounded-lg" data-id="${c.id}">Edit</button>
-                        <button class="delete-btn text-sm bg-red-100 text-red-700 hover:bg-red-200 font-semibold py-1 px-3 rounded-lg ml-2" data-id="${c.id}">Delete</button>
-                    </td>
-                `;
-                contestantListBody.appendChild(row);
-            });
-        }
-
-        // --- EVENT LISTENERS ---
-        contestantForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const contestantId = contestantIdInput.value;
+// ... existing code ... -->
+        const contestantId = contestantIdInput.value;
             const name = contestantNameInput.value.trim();
 
             if (!name) return;
@@ -190,28 +157,18 @@
             if (contestantId) { // EDIT mode
                 try {
                     const contestantRef = doc(db, "contestants", contestantId);
-                    await updateDoc(contestantRef, { name });
+                    await updateDoc(contestantRef, {
+                        name: name,
+                        "course1.total": Number(course1ScoreInput.value) || 0,
+                        "course2.total": Number(course2ScoreInput.value) || 0,
+                    });
                 } catch (error) {
                     console.error("Error updating contestant:", error);
                 }
             } else { // ADD mode
                 try {
                     await addDoc(contestantsCollectionRef, {
-                        name: name,
-                        course1: { total: 0, targets: {} },
-                        course2: { total: 0, targets: {} }
-                    });
-                } catch (error) {
-                    console.error("Error adding contestant:", error);
-                }
-            }
-            resetForm();
-        });
-
-        cancelEditBtn.addEventListener('click', resetForm);
-
-        contestantListBody.addEventListener('click', (e) => {
-            const target = e.target;
+// ... existing code ... -->
             const contestantId = target.dataset.id;
 
             if (target.classList.contains('edit-btn')) {
@@ -219,35 +176,15 @@
                 if (contestant) {
                     contestantIdInput.value = contestant.id;
                     contestantNameInput.value = contestant.name;
+                    course1ScoreInput.value = contestant.course1?.total || 0;
+                    course2ScoreInput.value = contestant.course2?.total || 0;
                     formTitle.textContent = 'Edit Contestant';
                     cancelEditBtn.classList.remove('hidden');
+                    scoreInputsContainer.classList.remove('hidden');
                     window.scrollTo(0, 0); // Scroll to top to see the form
                 }
             }
 
             if (target.classList.contains('delete-btn')) {
-                itemToDeleteId = contestantId;
-                openModal(deleteModal);
-            }
-        });
-        
-        cancelButtons.forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.fixed'))));
-        
-        confirmDeleteBtn.addEventListener('click', async () => {
-            if (itemToDeleteId) {
-                try {
-                    await deleteDoc(doc(db, "contestants", itemToDeleteId));
-                } catch (error) {
-                    console.error("Error deleting contestant:", error);
-                }
-                closeModal(deleteModal);
-                itemToDeleteId = null;
-            }
-        });
-
-        // --- INITIAL LOAD ---
-        initializeFirebase();
-    </script>
-</body>
-</html>
+// ... existing code ... -->
 

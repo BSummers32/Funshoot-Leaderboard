@@ -59,7 +59,10 @@
                     <p id="total-score" class="text-5xl font-extrabold mt-2 brand-blue">0</p>
                 </div>
 
-                 <div class="mt-8 flex items-center justify-end">
+                 <div class="mt-8 flex items-center justify-end gap-4">
+                     <button type="button" id="clear-score-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg text-lg hidden">
+                        Clear
+                    </button>
                     <button type="submit" id="save-score-btn" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-3 px-6 rounded-lg text-lg hidden">
                         Save Score
                     </button>
@@ -86,78 +89,22 @@
         const totalScoreEl = document.getElementById('total-score');
         const saveScoreBtn = document.getElementById('save-score-btn');
         const scoringForm = document.getElementById('scoring-form');
+        const clearScoreBtn = document.getElementById('clear-score-btn');
         
         // --- FIREBASE SETUP ---
         async function initializeFirebase() {
             try {
-                const firebaseConfig = {
-                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
-                  authDomain: "funshoot-leaderboard.firebaseapp.com",
-                  projectId: "funshoot-leaderboard",
-                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
-                  messagingSenderId: "1021423121559",
-                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
-                };
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                const auth = getAuth(app);
-                await signInAnonymously(auth);
-                const contestantsCollectionRef = collection(db, "contestants");
-                onSnapshot(contestantsCollectionRef, (snapshot) => {
-                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    populateContestantDropdown(contestantsCache);
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
-        }
-        
-        // --- UI FUNCTIONS ---
-        function populateContestantDropdown(contestants) {
-            const sortedContestants = [...contestants].sort((a, b) => a.name.localeCompare(b.name));
-            contestantSelect.innerHTML = '<option value="">-- Select a Contestant --</option>';
-            sortedContestants.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = c.name;
-                contestantSelect.appendChild(option);
-            });
-        }
-
-        function displayTargetInputs(contestant) {
-            targetsContainer.innerHTML = '';
-            TARGETS.forEach(targetName => {
-                const score = contestant[COURSE_ID]?.targets?.[targetName] || '';
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <label for="target-${targetName}" class="block text-gray-700 text-sm font-bold mb-1">${targetName}</label>
-                    <input type="number" id="target-${targetName}" data-target="${targetName}" class="target-input shadow-sm border rounded-lg w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${score}">
-                `;
-                targetsContainer.appendChild(div);
+// ... existing code ... -->
             });
             targetsContainer.classList.remove('hidden');
             summaryContainer.classList.remove('hidden');
             saveScoreBtn.classList.remove('hidden');
+            clearScoreBtn.classList.remove('hidden');
             calculateTotal();
         }
 
         function calculateTotal() {
-            let total = 0;
-            const inputs = document.querySelectorAll('.target-input');
-            inputs.forEach(input => {
-                total += Number(input.value) || 0;
-            });
-            totalScoreEl.textContent = total;
-            if (total > 120) {
-                totalScoreEl.classList.add('text-red-500');
-            } else {
-                totalScoreEl.classList.remove('text-red-500');
-            }
-        }
-
-        // --- EVENT LISTENERS ---
-        contestantSelect.addEventListener('change', () => {
-            const selectedId = contestantSelect.value;
+// ... existing code ... -->
             if (selectedId) {
                 const selectedContestant = contestantsCache.find(c => c.id === selectedId);
                 displayTargetInputs(selectedContestant);
@@ -165,41 +112,22 @@
                 targetsContainer.classList.add('hidden');
                 summaryContainer.classList.add('hidden');
                 saveScoreBtn.classList.add('hidden');
+                clearScoreBtn.classList.add('hidden');
             }
         });
         
         targetsContainer.addEventListener('input', calculateTotal);
 
+        clearScoreBtn.addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.target-input');
+            inputs.forEach(input => {
+                input.value = '';
+            });
+            calculateTotal();
+        });
+
         scoringForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const contestantId = contestantSelect.value;
-            if (!contestantId) return;
-
-            const inputs = document.querySelectorAll('.target-input');
-            const targetScores = {};
-            let total = 0;
-            inputs.forEach(input => {
-                const score = Number(input.value) || 0;
-                targetScores[input.dataset.target] = score;
-                total += score;
-            });
-            
-            try {
-                const contestantRef = doc(db, "contestants", contestantId);
-                const updateData = {};
-                updateData[`${COURSE_ID}.targets`] = targetScores;
-                updateData[`${COURSE_ID}.total`] = total;
-                await updateDoc(contestantRef, updateData);
-                alert('Score saved successfully!');
-            } catch (error) {
-                console.error("Error saving score:", error);
-                alert('Error saving score. Check console for details.');
-            }
-        });
-
-        // --- INITIAL LOAD ---
-        initializeFirebase();
-    </script>
-</body>
-</html>
+// ... existing code ... -->
 
