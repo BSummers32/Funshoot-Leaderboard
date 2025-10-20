@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Funshoot Leaderboard</title>
-    <!-- Added Trophy Favicon -->
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='gold' stroke='%23B5343B' stroke-width='1'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 0h-1.5a2.5 2.5 0 0 0 0 5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22m7-7.34V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22M18 2H6v7c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V2Z'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,18 +22,8 @@
             background-color: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(12px);
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-        }
         .brand-blue { color: #003A70; }
-        .bg-brand-blue { background-color: #003A70; }
-        .hover\:bg-brand-blue-dark:hover { background-color: #002a52; }
         .brand-red { color: #B5343B; }
-        .bg-brand-red { background-color: #B5343B; }
-        .hover\:bg-brand-red-dark:hover { background-color: #8c282d; }
-        .details-row { display: none; }
-        .details-row.expanded { display: table-row; }
         .loader {
             border: 8px solid #f3f3f3;
             border-top: 8px solid #003A70;
@@ -41,11 +31,6 @@
             width: 60px;
             height: 60px;
             animation: spin 1s linear infinite;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            margin-top: -30px;
-            margin-left: -30px;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -55,115 +40,71 @@
 </head>
 <body class="bg-gray-200 text-gray-800">
 
-    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
         <div class="loader"></div>
+        <p class="mt-4 text-lg brand-blue font-semibold">Loading Leaderboards...</p>
     </div>
 
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="main-container rounded-2xl shadow-2xl p-6 md:p-8 max-w-5xl mx-auto">
+        <div class="main-container rounded-2xl shadow-2xl p-6 md:p-8 max-w-7xl mx-auto">
             
             <header class="text-center mb-6 border-b pb-6 border-gray-200">
                 <h1 class="text-4xl sm:text-5xl font-bold brand-blue">Funshoot Leaderboard</h1>
                 <p class="text-gray-500 mt-2 text-lg">Hosted by ShootSmart</p>
-                <button id="add-contestant-btn" class="mt-6 bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-5 rounded-lg transition-colors shadow-md">
-                    Add New Contestant
-                </button>
             </header>
             
-            <div id="leaderboard-container" class="overflow-x-auto">
-                <table class="min-w-full bg-transparent">
-                    <thead class="border-b-2 border-gray-300">
-                        <tr>
-                            <th class="p-4 text-base font-semibold tracking-wider text-left w-20">Rank</th>
-                            <th class="p-4 text-base font-semibold tracking-wider text-left">Contestant</th>
-                            <th class="p-4 text-base font-semibold tracking-wider text-left">Best Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body">
-                        <!-- Dynamic content will be inserted here -->
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Course 1 Leaderboard -->
+                <div>
+                    <h2 class="text-3xl font-bold brand-blue text-center mb-4">Course 1</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-transparent">
+                            <thead class="border-b-2 border-gray-300">
+                                <tr>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left w-20">Rank</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Contestant</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body-c1">
+                                <!-- Dynamic content for Course 1 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Course 2 Leaderboard -->
+                <div>
+                    <h2 class="text-3xl font-bold brand-blue text-center mb-4">Course 2</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-transparent">
+                            <thead class="border-b-2 border-gray-300">
+                                <tr>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left w-20">Rank</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Contestant</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body-c2">
+                                <!-- Dynamic content for Course 2 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- MODALS -->
-    <div id="contestant-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full m-4">
-            <h2 id="contestant-modal-title" class="text-2xl font-bold mb-6 brand-blue">Add New Contestant</h2>
-            <form id="contestant-form">
-                <div class="mb-6">
-                    <label for="contestant-name" class="block text-gray-700 text-sm font-bold mb-2">Contestant Name</label>
-                    <input type="text" id="contestant-name" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="flex items-center justify-end gap-4">
-                    <button type="button" class="modal-cancel bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="run-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full m-4">
-            <h2 class="text-2xl font-bold mb-2 brand-blue">Add New Run</h2>
-            <p id="run-modal-contestant-name" class="mb-6 text-gray-600"></p>
-            <form id="run-form">
-                <input type="hidden" id="run-contestant-id">
-                <div class="mb-6">
-                    <label for="run-score" class="block text-gray-700 text-sm font-bold mb-2">Score</label>
-                    <input type="number" id="run-score" placeholder="e.g., 100" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="flex items-center justify-end gap-4">
-                    <button type="button" class="modal-cancel bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg">Add Run</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full m-4 text-center">
-            <h2 class="text-xl font-bold mb-4 brand-blue">Are you sure?</h2>
-            <p id="delete-modal-text" class="text-gray-600 mb-6"></p>
-            <div class="flex items-center justify-center gap-4">
-                <button type="button" class="modal-cancel bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
-                <button type="button" id="confirm-delete" class="bg-brand-red hover:bg-brand-red-dark text-white font-bold py-2 px-6 rounded-lg">Delete</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- GLOBAL VARS ---
-        let db;
-        let contestantsCache = [];
-        let itemToDelete = null; 
-        let leaderboardCollectionRef;
-
-        // --- DOM ELEMENTS ---
         const loader = document.getElementById('loader');
-        const leaderboardBody = document.getElementById('leaderboard-body');
-        const addContestantBtn = document.getElementById('add-contestant-btn');
-        const contestantModal = document.getElementById('contestant-modal');
-        const contestantForm = document.getElementById('contestant-form');
-        const runModal = document.getElementById('run-modal');
-        const runForm = document.getElementById('run-form');
-        const runModalContestantName = document.getElementById('run-modal-contestant-name');
-        const runContestantIdInput = document.getElementById('run-contestant-id');
-        const deleteModal = document.getElementById('delete-modal');
-        const confirmDeleteBtn = document.getElementById('confirm-delete');
-        const deleteModalText = document.getElementById('delete-modal-text');
-        const cancelButtons = document.querySelectorAll('.modal-cancel');
 
-        // --- FIREBASE SETUP ---
         async function initializeFirebase() {
             try {
-                // Your web app's Firebase configuration
                 const firebaseConfig = {
                   apiKey: "AIzaSyDZlvzG8wvxk2aUDYtbOuF8LaaJwoxjGS0",
                   authDomain: "funshoot-leaderboard-ec885.firebaseapp.com",
@@ -174,199 +115,68 @@
                 };
 
                 const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
+                const db = getFirestore(app);
                 const auth = getAuth(app);
                 await signInAnonymously(auth);
                 
-                leaderboardCollectionRef = collection(db, "leaderboard");
+                const contestantsCollectionRef = collection(db, "contestants");
                 
-                onSnapshot(leaderboardCollectionRef, (snapshot) => {
-                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderLeaderboard(contestantsCache);
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderLeaderboards(contestants);
                     loader.style.display = 'none';
                 });
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                loader.innerHTML = "Error loading leaderboard. Check console for details.";
+                loader.innerHTML = "Error loading leaderboards. Check console for details.";
             }
         }
 
-        // --- DATA HELPERS ---
-        function getBestRun(runs) {
-            if (!runs || runs.length === 0) {
-                return { score: 'N/A' };
-            }
-            return runs.reduce((best, current) => (current.score > best.score ? current : best), { score: -1 });
+        function renderLeaderboards(contestants) {
+            renderCourseLeaderboard('c1', contestants);
+            renderCourseLeaderboard('c2', contestants);
         }
 
-        // --- RENDER FUNCTION (No changes from previous version) ---
-        function renderLeaderboard(contestants) {
-            const leaderboardData = contestants.map(c => ({
-                ...c,
-                bestRun: getBestRun(c.runs),
-            })).sort((a, b) => {
-                if (a.bestRun.score === 'N/A') return 1;
-                if (b.bestRun.score === 'N/A') return -1;
-                return b.bestRun.score - a.bestRun.score;
-            });
+        function renderCourseLeaderboard(courseKey, contestants) {
+            const leaderboardBody = document.getElementById(`leaderboard-body-${courseKey}`);
+            const courseDataKey = `course${courseKey.slice(-1)}`; // course1 or course2
+
+            const leaderboardData = contestants
+                .map(c => ({
+                    name: c.name,
+                    score: c[courseDataKey]?.total || 0,
+                }))
+                .sort((a, b) => b.score - a.score);
 
             leaderboardBody.innerHTML = '';
             if (leaderboardData.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="3" class="text-center p-6 text-gray-500 text-lg">No contestants yet. Add one to get started!</td></tr>`;
+                leaderboardBody.innerHTML = `<tr><td colspan="3" class="text-center p-6 text-gray-500">No contestants yet.</td></tr>`;
                 return;
             }
 
             leaderboardData.forEach((player, index) => {
                 const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors duration-200';
-                row.dataset.contestantId = player.id;
+                row.className = 'border-b border-gray-200';
 
                 let rankDisplay;
                 switch(index) {
-                    case 0: rankDisplay = '&#129351;'; break;
-                    case 1: rankDisplay = '&#129352;'; break;
-                    case 2: rankDisplay = '&#129353;'; break;
+                    case 0: rankDisplay = '&#129351;'; break; // Gold
+                    case 1: rankDisplay = '&#129352;'; break; // Silver
+                    case 2: rankDisplay = '&#129353;'; break; // Bronze
                     default: rankDisplay = `<span class="font-bold text-gray-500">${index + 1}</span>`;
                 }
                 
                 row.innerHTML = `
                     <td class="p-4 text-3xl font-bold text-center w-20">${rankDisplay}</td>
                     <td class="p-4 text-xl text-gray-800 font-semibold">${player.name}</td>
-                    <td class="p-4 text-2xl brand-blue font-extrabold">${player.bestRun.score}</td>
+                    <td class="p-4 text-2xl brand-blue font-extrabold">${player.score}</td>
                 `;
                 leaderboardBody.appendChild(row);
-
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = 'details-row';
-                detailsRow.dataset.detailsFor = player.id;
-                
-                const detailsCell = document.createElement('td');
-                detailsCell.colSpan = 3;
-                detailsCell.className = 'p-5 bg-gray-50';
-
-                let runsHtml = '';
-                if (player.runs && player.runs.length > 0) {
-                    const sortedRuns = [...player.runs].sort((a,b) => b.score - a.score);
-                    runsHtml = '<h4 class="font-bold mb-2 text-gray-600">All Runs:</h4><ul class="list-disc pl-5 space-y-2">';
-                    sortedRuns.forEach(run => {
-                       runsHtml += `<li class="text-sm text-gray-700 flex justify-between items-center"><span>Score: <span class="font-bold">${run.score}</span></span> <button class="delete-run-btn text-red-500 hover:text-red-700 font-semibold text-xs py-1 px-2 rounded hover:bg-red-100" data-contestant-id="${player.id}" data-run-id="${run.id}">REMOVE</button></li>`;
-                    });
-                    runsHtml += '</ul>';
-                } else {
-                    runsHtml = '<p class="text-sm text-gray-500 italic text-center py-2">No runs recorded for this contestant yet.</p>';
-                }
-
-                detailsCell.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>${runsHtml}</div>
-                        <div class="flex flex-col items-center justify-center space-y-3 p-4 bg-gray-100 rounded-lg">
-                             <h4 class="font-bold text-gray-700">Manage Contestant</h4>
-                            <button class="add-run-btn bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-2 px-4 rounded-lg w-full" data-id="${player.id}" data-name="${player.name}">Add New Run</button>
-                            <button class="delete-contestant-btn bg-brand-red hover:bg-brand-red-dark text-white text-sm font-bold py-2 px-4 rounded-lg w-full" data-id="${player.id}">Delete Contestant</button>
-                        </div>
-                    </div>
-                `;
-                detailsRow.appendChild(detailsCell);
-                leaderboardBody.appendChild(detailsRow);
             });
         }
 
-        // --- MODAL CONTROLS ---
-        function openModal(modal) { modal.classList.remove('hidden'); }
-        function closeModal(modal) { modal.classList.add('hidden'); }
-
-        // --- EVENT LISTENERS ---
-        addContestantBtn.addEventListener('click', () => {
-            contestantForm.reset();
-            openModal(contestantModal);
-        });
-
-        cancelButtons.forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.fixed'))));
-
-        contestantForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('contestant-name').value.trim();
-            if (name) {
-                await addDoc(leaderboardCollectionRef, { name, runs: [] });
-                closeModal(contestantModal);
-            }
-        });
-
-        runForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const contestantId = runContestantIdInput.value;
-            const score = parseInt(document.getElementById('run-score').value, 10);
-            
-            const contestant = contestantsCache.find(c => c.id === contestantId);
-            if (contestant && !isNaN(score)) {
-                const newRun = { id: Date.now(), score };
-                const updatedRuns = [...contestant.runs, newRun];
-                await updateDoc(doc(db, "leaderboard", contestantId), { runs: updatedRuns });
-                closeModal(runModal);
-            }
-        });
-
-        leaderboardBody.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (button) {
-                e.stopPropagation();
-                if (button.classList.contains('add-run-btn')) {
-                    runForm.reset();
-                    runContestantIdInput.value = button.dataset.id;
-                    runModalContestantName.textContent = `For ${button.dataset.name}`;
-                    openModal(runModal);
-                } else if (button.classList.contains('delete-contestant-btn')) {
-                    itemToDelete = { type: 'contestant', id: button.dataset.id };
-                    deleteModalText.textContent = "Do you really want to delete this contestant and all their runs? This action cannot be undone.";
-                    openModal(deleteModal);
-                } else if (button.classList.contains('delete-run-btn')) {
-                    itemToDelete = { 
-                        type: 'run', 
-                        contestantId: button.dataset.contestantId,
-                        runId: parseInt(button.dataset.runId, 10)
-                    };
-                    deleteModalText.textContent = "Do you really want to delete this run? This action cannot be undone.";
-                    openModal(deleteModal);
-                }
-                return;
-            }
-            
-            const row = e.target.closest('tr[data-contestant-id]');
-            if (row) {
-                const detailsRow = leaderboardBody.querySelector(`[data-details-for="${row.dataset.contestantId}"]`);
-                if (detailsRow) {
-                    const isExpanded = detailsRow.classList.contains('expanded');
-                    leaderboardBody.querySelectorAll('.details-row.expanded').forEach(r => r.classList.remove('expanded'));
-                    if (!isExpanded) detailsRow.classList.add('expanded');
-                }
-            }
-        });
-
-        confirmDeleteBtn.addEventListener('click', async () => {
-            if (!itemToDelete) return;
-
-            if (itemToDelete.type === 'contestant') {
-                await deleteDoc(doc(db, "leaderboard", itemToDelete.id));
-            }
-            
-            if (itemToDelete.type === 'run') {
-                const { contestantId, runId } = itemToDelete;
-                const contestant = contestantsCache.find(c => c.id === contestantId);
-                if (contestant) {
-                    const updatedRuns = contestant.runs.filter(r => r.id !== runId);
-                    await updateDoc(doc(db, "leaderboard", contestantId), { runs: updatedRuns });
-                }
-            }
-
-            closeModal(deleteModal);
-            itemToDelete = null;
-        });
-
-        // --- INITIAL LOAD ---
         initializeFirebase();
     </script>
 </body>
 </html>
-
-

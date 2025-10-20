@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Funshoot Leaderboard</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='gold' stroke='%23B5343B' stroke-width='1'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 0h-1.5a2.5 2.5 0 0 0 0 5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22m7-7.34V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22M18 2H6v7c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V2Z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif;
+            background-image: url('./Target Pattern Blue.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+        .brand-blue { color: #003A70; }
+        .bg-brand-blue { background-color: #003A70; }
+        .hover\:bg-brand-blue-dark:hover { background-color: #002a52; }
+        .brand-red { color: #B5343B; }
+        .bg-brand-red { background-color: #B5343B; }
+        .hover\:bg-brand-red-dark:hover { background-color: #8c282d; }
+    </style>
+</head>
+<body class="bg-gray-200 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="main-container rounded-2xl shadow-2xl p-6 md:p-8 max-w-5xl mx-auto">
+            
+            <header class="text-center mb-6 border-b pb-6 border-gray-200">
+                <h1 class="text-4xl sm:text-5xl font-bold brand-blue">Admin Panel</h1>
+                <p class="text-gray-500 mt-2 text-lg">Manage Contestants & Scores</p>
+                <nav class="mt-4 space-x-4">
+                    <a href="./index.html" class="text-blue-600 hover:underline">Main Display</a>
+                    <a href="./scoring-c1.html" class="text-blue-600 hover:underline">Score Course 1</a>
+                    <a href="./scoring-c2.html" class="text-blue-600 hover:underline">Score Course 2</a>
+                </nav>
+            </header>
+
+            <!-- Add/Edit Contestant Form -->
+            <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 brand-blue" id="form-title">Add New Contestant</h2>
+                <form id="contestant-form">
+                    <input type="hidden" id="contestant-id">
+                    <div class="mb-4">
+                        <label for="contestant-name" class="block text-gray-700 text-sm font-bold mb-2">Contestant Name</label>
+                        <input type="text" id="contestant-name" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="flex items-center justify-end gap-4">
+                        <button type="button" id="cancel-edit-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hidden">Cancel</button>
+                        <button type="submit" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg">Save Contestant</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contestant List -->
+            <div id="contestant-list-container" class="overflow-x-auto">
+                <table class="min-w-full bg-transparent">
+                    <thead class="border-b-2 border-gray-300">
+                        <tr>
+                            <th class="p-3 text-sm font-semibold tracking-wider text-left">Contestant</th>
+                            <th class="p-3 text-sm font-semibold tracking-wider text-center">Course 1 Score</th>
+                            <th class="p-3 text-sm font-semibold tracking-wider text-center">Course 2 Score</th>
+                            <th class="p-3 text-sm font-semibold tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contestant-list-body">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full m-4 text-center">
+            <h2 class="text-xl font-bold mb-4 brand-blue">Are you sure?</h2>
+            <p class="text-gray-600 mb-6">This will permanently delete the contestant and all their scores. This action cannot be undone.</p>
+            <div class="flex items-center justify-center gap-4">
+                <button type="button" class="modal-cancel bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">Cancel</button>
+                <button type="button" id="confirm-delete-btn" class="bg-brand-red hover:bg-brand-red-dark text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        let db;
+        let contestantsCollectionRef;
+        let contestantToDeleteId = null;
+
+        // DOM Elements
+        const contestantForm = document.getElementById('contestant-form');
+        const formTitle = document.getElementById('form-title');
+        const contestantIdInput = document.getElementById('contestant-id');
+        const contestantNameInput = document.getElementById('contestant-name');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const contestantListBody = document.getElementById('contestant-list-body');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+        async function initializeFirebase() {
+            const firebaseConfig = {
+              apiKey: "AIzaSyDZlvzG8wvxk2aUDYtbOuF8LaaJwoxjGS0",
+              authDomain: "funshoot-leaderboard-ec885.firebaseapp.com",
+              projectId: "funshoot-leaderboard-ec885",
+              storageBucket: "funshoot-leaderboard-ec885.appspot.com",
+              messagingSenderId: "189311770797",
+              appId: "1:189311770797:web:b0ca5ae83bf430a09e6624"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            const auth = getAuth(app);
+            await signInAnonymously(auth);
+            contestantsCollectionRef = collection(db, "contestants");
+            
+            onSnapshot(contestantsCollectionRef, (snapshot) => {
+                const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderContestantList(contestants);
+            });
+        }
+
+        function renderContestantList(contestants) {
+            contestantListBody.innerHTML = '';
+            if (contestants.length === 0) {
+                contestantListBody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No contestants added yet.</td></tr>`;
+                return;
+            }
+            contestants.forEach(c => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200';
+                row.innerHTML = `
+                    <td class="p-3 font-semibold">${c.name}</td>
+                    <td class="p-3 text-center">${c.course1?.total || 0}</td>
+                    <td class="p-3 text-center">${c.course2?.total || 0}</td>
+                    <td class="p-3 text-right space-x-2">
+                        <button class="edit-btn text-sm bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded" data-id="${c.id}" data-name="${c.name}">Edit</button>
+                        <button class="delete-btn text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded" data-id="${c.id}">Delete</button>
+                    </td>
+                `;
+                contestantListBody.appendChild(row);
+            });
+        }
+        
+        function resetForm() {
+            contestantForm.reset();
+            contestantIdInput.value = '';
+            formTitle.textContent = 'Add New Contestant';
+            cancelEditBtn.classList.add('hidden');
+        }
+        
+        // Event Listeners
+        contestantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = contestantIdInput.value;
+            const name = contestantNameInput.value.trim();
+            if (!name) return;
+
+            if (id) { // Editing existing
+                await updateDoc(doc(db, "contestants", id), { name });
+            } else { // Adding new
+                await addDoc(contestantsCollectionRef, { 
+                    name, 
+                    course1: { total: 0 }, 
+                    course2: { total: 0 } 
+                });
+            }
+            resetForm();
+        });
+
+        cancelEditBtn.addEventListener('click', resetForm);
+        
+        contestantListBody.addEventListener('click', (e) => {
+            if (e.target.classList.contains('edit-btn')) {
+                formTitle.textContent = 'Edit Contestant';
+                contestantIdInput.value = e.target.dataset.id;
+                contestantNameInput.value = e.target.dataset.name;
+                cancelEditBtn.classList.remove('hidden');
+                window.scrollTo(0, 0);
+            }
+            if (e.target.classList.contains('delete-btn')) {
+                contestantToDeleteId = e.target.dataset.id;
+                deleteModal.classList.remove('hidden');
+            }
+        });
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (contestantToDeleteId) {
+                await deleteDoc(doc(db, "contestants", contestantToDeleteId));
+                contestantToDeleteId = null;
+                deleteModal.classList.add('hidden');
+            }
+        });
+        
+        deleteModal.querySelector('.modal-cancel').addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+        });
+
+        initializeFirebase();
+    </script>
+</body>
+</html>
