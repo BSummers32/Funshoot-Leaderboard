@@ -105,6 +105,7 @@
 
         async function initializeFirebase() {
             try {
+                console.log("1. Initializing Firebase...");
                 const firebaseConfig = {
                   apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
                   authDomain: "funshoot-leaderboard.firebaseapp.com",
@@ -116,5 +117,94 @@
 
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
-// ... existing code ... -->
+                const auth = getAuth(app);
+
+                console.log("2. Signing in anonymously...");
+                await signInAnonymously(auth);
+                console.log("3. Signed in successfully.");
+                
+                const contestantsCollectionRef = collection(db, "contestants");
+                
+                console.log("4. Attaching Firestore listener...");
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    console.log("5. Firestore listener fired! Data received.");
+                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderLeaderboards(contestants);
+                    loader.style.display = 'none';
+                }, (error) => {
+                    console.error("Firestore listener error:", error);
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                loader.innerHTML = "Error loading leaderboards. Check console for details.";
+            }
+        }
+
+        function renderLeaderboards(contestants) {
+            const leaderboardBodyC1 = document.getElementById('leaderboard-body-c1');
+            const leaderboardBodyC2 = document.getElementById('leaderboard-body-c2');
+
+            // --- Course 1 ---
+            const course1Data = contestants
+                .map(c => ({ name: c.name, score: c.course1?.total || 0 }))
+                .sort((a, b) => b.score - a.score);
+
+            leaderboardBodyC1.innerHTML = '';
+            if (course1Data.length === 0) {
+                leaderboardBodyC1.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-gray-500">No scores yet.</td></tr>`;
+            } else {
+                course1Data.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200';
+                    let rankDisplay;
+                    switch(index) {
+                        case 0: rankDisplay = '&#129351;'; break; // Gold
+                        case 1: rankDisplay = '&#129352;'; break; // Silver
+                        case 2: rankDisplay = '&#129353;'; break; // Bronze
+                        default: rankDisplay = `<span class="font-bold text-gray-500">${index + 1}</span>`;
+                    }
+                    row.innerHTML = `
+                        <td class="p-4 text-3xl font-bold text-center w-20">${rankDisplay}</td>
+                        <td class="p-4 text-lg text-gray-800 font-semibold">${player.name}</td>
+                        <td class="p-4 text-xl brand-blue font-extrabold">${player.score}</td>
+                    `;
+                    leaderboardBodyC1.appendChild(row);
+                });
+            }
+
+            // --- Course 2 ---
+            const course2Data = contestants
+                .map(c => ({ name: c.name, score: c.course2?.total || 0 }))
+                .sort((a, b) => b.score - a.score);
+
+            leaderboardBodyC2.innerHTML = '';
+            if (course2Data.length === 0) {
+                leaderboardBodyC2.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-gray-500">No scores yet.</td></tr>`;
+            } else {
+                course2Data.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200';
+                    let rankDisplay;
+                    switch(index) {
+                        case 0: rankDisplay = '&#129351;'; break; // Gold
+                        case 1: rankDisplay = '&#129352;'; break; // Silver
+                        case 2: rankDisplay = '&#129353;'; break; // Bronze
+                        default: rankDisplay = `<span class="font-bold text-gray-500">${index + 1}</span>`;
+                    }
+                    row.innerHTML = `
+                        <td class="p-4 text-3xl font-bold text-center w-20">${rankDisplay}</td>
+                        <td class="p-4 text-lg text-gray-800 font-semibold">${player.name}</td>
+                        <td class="p-4 text-xl brand-blue font-extrabold">${player.score}</td>
+                    `;
+                    leaderboardBodyC2.appendChild(row);
+                });
+            }
+        }
+
+        // Initial Load
+        initializeFirebase();
+    </script>
+</body>
+</html>
 
