@@ -103,12 +103,35 @@
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         let db;
-// ... existing code ... -->
-        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        let contestantsCollectionRef;
+        let contestantsCache = [];
+        let itemToDeleteId = null;
 
+        // DOM Elements
+        const contestantForm = document.getElementById('contestant-form');
+        const contestantIdInput = document.getElementById('contestant-id');
+        const contestantNameInput = document.getElementById('contestant-name');
+        const formTitle = document.getElementById('form-title');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const contestantListBody = document.getElementById('contestant-list-body');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelButtons = document.querySelectorAll('.modal-cancel');
+
+        // --- UTILITY FUNCTIONS ---
+        function openModal(modal) { modal.classList.remove('hidden'); }
+        function closeModal(modal) { modal.classList.add('hidden'); }
+
+        function resetForm() {
+            contestantForm.reset();
+            contestantIdInput.value = '';
+            formTitle.textContent = 'Add New Contestant';
+            cancelEditBtn.classList.add('hidden');
+        }
+
+        // --- FIREBASE SETUP ---
         async function initializeFirebase() {
             try {
-                console.log("1. Initializing Firebase...");
                 const firebaseConfig = {
                   apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
                   authDomain: "funshoot-leaderboard.firebaseapp.com",
@@ -120,58 +143,111 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 const auth = getAuth(app);
-                
-                console.log("2. Signing in anonymously...");
                 await signInAnonymously(auth);
-                console.log("3. Signed in successfully.");
-
                 contestantsCollectionRef = collection(db, "contestants");
-                
-                console.log("4. Attaching Firestore listener...");
                 onSnapshot(contestantsCollectionRef, (snapshot) => {
-                    console.log("5. Firestore listener fired! Data received.");
-                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderContestantList(contestants);
-                }, (error) => {
-                    console.error("Firestore listener error:", error);
+                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderContestantList(contestantsCache);
                 });
             } catch (error) {
                  console.error("Firebase initialization failed:", error);
             }
         }
 
+        // --- RENDER FUNCTION ---
         function renderContestantList(contestants) {
-// ... existing code ... -->
+            contestantListBody.innerHTML = '';
+            if (!contestants || contestants.length === 0) {
+                contestantListBody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No contestants yet. Add one to get started!</td></tr>`;
+                return;
             }
+            const sortedContestants = [...contestants].sort((a, b) => a.name.localeCompare(b.name));
+
+            sortedContestants.forEach(c => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200';
+                row.innerHTML = `
+                    <td class="p-3 font-semibold">${c.name}</td>
+                    <td class="p-3 text-center">${c.course1?.total || 0}</td>
+                    <td class="p-3 text-center">${c.course2?.total || 0}</td>
+                    <td class="p-3 text-right">
+                        <button class="edit-btn text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-3 rounded-lg" data-id="${c.id}">Edit</button>
+                        <button class="delete-btn text-sm bg-red-100 text-red-700 hover:bg-red-200 font-semibold py-1 px-3 rounded-lg ml-2" data-id="${c.id}">Delete</button>
+                    </td>
+                `;
+                contestantListBody.appendChild(row);
+            });
         }
 
-        addContestantForm.addEventListener('submit', async (e) => {
+        // --- EVENT LISTENERS ---
+        contestantForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log("Add contestant form submitted.");
-            const nameInput = document.getElementById('contestant-name');
-            const name = nameInput.value.trim();
-            console.log(`Contestant name entered: "${name}"`);
+            const contestantId = contestantIdInput.value;
+            const name = contestantNameInput.value.trim();
 
-            if (name) {
+            if (!name) return;
+
+            if (contestantId) { // EDIT mode
                 try {
-                    console.log("Attempting to add document to Firestore...");
-                    const docRef = await addDoc(contestantsCollectionRef, {
+                    const contestantRef = doc(db, "contestants", contestantId);
+                    await updateDoc(contestantRef, { name });
+                } catch (error) {
+                    console.error("Error updating contestant:", error);
+                }
+            } else { // ADD mode
+                try {
+                    await addDoc(contestantsCollectionRef, {
                         name: name,
                         course1: { total: 0, targets: {} },
                         course2: { total: 0, targets: {} }
                     });
-                    console.log("Document written with ID: ", docRef.id);
-                    nameInput.value = ''; // Clear input for next time
-                    closeModal(addContestantModal);
                 } catch (error) {
-                    console.error("Error adding document: ", error);
+                    console.error("Error adding contestant:", error);
                 }
-            } else {
-                console.log("Name is empty, not adding contestant.");
+            }
+            resetForm();
+        });
+
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        contestantListBody.addEventListener('click', (e) => {
+            const target = e.target;
+            const contestantId = target.dataset.id;
+
+            if (target.classList.contains('edit-btn')) {
+                const contestant = contestantsCache.find(c => c.id === contestantId);
+                if (contestant) {
+                    contestantIdInput.value = contestant.id;
+                    contestantNameInput.value = contestant.name;
+                    formTitle.textContent = 'Edit Contestant';
+                    cancelEditBtn.classList.remove('hidden');
+                    window.scrollTo(0, 0); // Scroll to top to see the form
+                }
+            }
+
+            if (target.classList.contains('delete-btn')) {
+                itemToDeleteId = contestantId;
+                openModal(deleteModal);
+            }
+        });
+        
+        cancelButtons.forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.fixed'))));
+        
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (itemToDeleteId) {
+                try {
+                    await deleteDoc(doc(db, "contestants", itemToDeleteId));
+                } catch (error) {
+                    console.error("Error deleting contestant:", error);
+                }
+                closeModal(deleteModal);
+                itemToDeleteId = null;
             }
         });
 
-        editContestantForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-// ... existing code ... -->
+        // --- INITIAL LOAD ---
+        initializeFirebase();
+    </script>
+</body>
+</html>
 
