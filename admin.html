@@ -54,7 +54,7 @@
                 <h2 class="text-2xl font-bold mb-4 brand-blue" id="form-title">Add New Contestant</h2>
                 <form id="contestant-form">
                     <input type="hidden" id="contestant-id">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="md:col-span-1">
                             <label for="contestant-name" class="block text-gray-700 text-sm font-bold mb-2">Contestant Name</label>
                             <input type="text" id="contestant-name" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -148,27 +148,106 @@
 
         // --- FIREBASE SETUP ---
         async function initializeFirebase() {
-// ... existing code ... -->
-        const contestantId = contestantIdInput.value;
-            const name = contestantNameInput.value.trim();
+            try {
+                const firebaseConfig = {
+                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+                  authDomain: "funshoot-leaderboard.firebaseapp.com",
+                  projectId: "funshoot-leaderboard",
+                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  messagingSenderId: "1021423121559",
+                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
+                };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                const auth = getAuth(app);
+                await signInAnonymously(auth);
+                contestantsCollectionRef = collection(db, "contestants");
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderContestantList(contestantsCache);
+                });
+            } catch (error) {
+                 console.error("Firebase initialization failed:", error);
+            }
+        }
 
-            if (!name) return;
+        // --- RENDER FUNCTION ---
+        function renderContestantList(contestants) {
+            contestantListBody.innerHTML = '';
+            if (!contestants || contestants.length === 0) {
+                contestantListBody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No contestants yet. Add one to get started!</td></tr>`;
+                return;
+            }
+            const sortedContestants = [...contestants].sort((a, b) => a.name.localeCompare(b.name));
+
+            sortedContestants.forEach(c => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200';
+                row.innerHTML = `
+                    <td class="p-3 font-semibold">${c.name}</td>
+                    <td class="p-3 text-center">${c.course1?.total || 0}</td>
+                    <td class="p-3 text-center">${c.course2?.total || 0}</td>
+                    <td class="p-3 text-right">
+                        <button class="edit-btn text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-3 rounded-lg" data-id="${c.id}">Edit</button>
+                        <button class="delete-btn text-sm bg-red-100 text-red-700 hover:bg-red-200 font-semibold py-1 px-3 rounded-lg ml-2" data-id="${c.id}">Delete</button>
+                    </td>
+                `;
+                contestantListBody.appendChild(row);
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        contestantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("1. Save button clicked, form submitted.");
+
+            const contestantId = contestantIdInput.value;
+            const name = contestantNameInput.value.trim();
+            console.log(`2. Contestant ID: '${contestantId}', Name: '${name}'`);
+
+            if (!name) {
+                 console.log("3. Name is empty, aborting save.");
+                return;
+            }
 
             if (contestantId) { // EDIT mode
+                console.log("3. Mode: EDIT");
+                const dataToUpdate = {
+                    name: name,
+                    "course1.total": Number(course1ScoreInput.value) || 0,
+                    "course2.total": Number(course2ScoreInput.value) || 0,
+                };
+                console.log("4. Data to update:", dataToUpdate);
                 try {
                     const contestantRef = doc(db, "contestants", contestantId);
-                    await updateDoc(contestantRef, {
-                        name: name,
-                        "course1.total": Number(course1ScoreInput.value) || 0,
-                        "course2.total": Number(course2ScoreInput.value) || 0,
-                    });
+                    await updateDoc(contestantRef, dataToUpdate);
+                    console.log("5. Contestant updated successfully in Firebase.");
                 } catch (error) {
-                    console.error("Error updating contestant:", error);
+                    console.error("5. Firebase Error (update):", error);
                 }
             } else { // ADD mode
+                console.log("3. Mode: ADD");
+                 const newContestantData = {
+                    name: name,
+                    course1: { total: 0, targets: {} },
+                    course2: { total: 0, targets: {} }
+                };
+                console.log("4. Data to add:", newContestantData);
                 try {
-                    await addDoc(contestantsCollectionRef, {
-// ... existing code ... -->
+                    await addDoc(contestantsCollectionRef, newContestantData);
+                    console.log("5. New contestant added successfully to Firebase.");
+                } catch (error) {
+                    console.error("5. Firebase Error (add):", error);
+                }
+            }
+            resetForm();
+            console.log("6. Form has been reset.");
+        });
+
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        contestantListBody.addEventListener('click', (e) => {
+            const target = e.target;
             const contestantId = target.dataset.id;
 
             if (target.classList.contains('edit-btn')) {
@@ -186,5 +265,28 @@
             }
 
             if (target.classList.contains('delete-btn')) {
-// ... existing code ... -->
+                itemToDeleteId = contestantId;
+                openModal(deleteModal);
+            }
+        });
+        
+        cancelButtons.forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.fixed'))));
+        
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (itemToDeleteId) {
+                try {
+                    await deleteDoc(doc(db, "contestants", itemToDeleteId));
+                } catch (error) {
+                    console.error("Error deleting contestant:", error);
+                }
+                closeModal(deleteModal);
+                itemToDeleteId = null;
+            }
+        });
+
+        // --- INITIAL LOAD ---
+        initializeFirebase();
+    </script>
+</body>
+</html>
 
