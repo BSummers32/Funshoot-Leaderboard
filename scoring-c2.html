@@ -44,10 +44,14 @@
             <!-- Scoring Form -->
             <form id="scoring-form">
                 <div class="mb-6">
-                    <label for="contestant-select" class="block text-gray-700 text-sm font-bold mb-2">Select Contestant</label>
-                    <select id="contestant-select" class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                        <option value="">-- Loading Contestants --</option>
-                    </select>
+                    <label for="contestant-search" class="block text-gray-700 text-sm font-bold mb-2">Search Contestant</label>
+                    <div class="relative">
+                        <input type="text" id="contestant-search" placeholder="Start typing a name..." class="shadow-sm border rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <div id="contestant-results" class="absolute z-10 w-full bg-white border rounded-lg mt-1 hidden max-h-60 overflow-y-auto shadow-lg">
+                            <!-- Search results will be populated here -->
+                        </div>
+                    </div>
+                    <input type="hidden" id="selected-contestant-id">
                 </div>
 
                 <div id="targets-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6 hidden">
@@ -83,7 +87,9 @@
         const TARGETS = ['T1', 'T2', 'T3', 'T4', 'T5', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7'];
 
         // DOM Elements
-        const contestantSelect = document.getElementById('contestant-select');
+        const contestantSearchInput = document.getElementById('contestant-search');
+        const contestantResultsContainer = document.getElementById('contestant-results');
+        const selectedContestantIdInput = document.getElementById('selected-contestant-id');
         const targetsContainer = document.getElementById('targets-container');
         const summaryContainer = document.getElementById('summary-container');
         const totalScoreEl = document.getElementById('total-score');
@@ -94,7 +100,54 @@
         // --- FIREBASE SETUP ---
         async function initializeFirebase() {
             try {
-// ... existing code ... -->
+                const firebaseConfig = {
+                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+                  authDomain: "funshoot-leaderboard.firebaseapp.com",
+                  projectId: "funshoot-leaderboard",
+                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  messagingSenderId: "1021423121559",
+                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
+                };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                const auth = getAuth(app);
+                await signInAnonymously(auth);
+                const contestantsCollectionRef = collection(db, "contestants");
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                });
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+        
+        // --- UI FUNCTIONS ---
+        function renderContestantResults(filteredContestants) {
+            contestantResultsContainer.innerHTML = '';
+            if (filteredContestants.length === 0) {
+                contestantResultsContainer.innerHTML = `<div class="p-3 text-gray-500">No matches found</div>`;
+            } else {
+                filteredContestants.forEach(c => {
+                    const resultEl = document.createElement('div');
+                    resultEl.className = 'p-3 hover:bg-gray-100 cursor-pointer';
+                    resultEl.textContent = c.name;
+                    resultEl.dataset.id = c.id;
+                    resultEl.dataset.name = c.name;
+                    contestantResultsContainer.appendChild(resultEl);
+                });
+            }
+        }
+
+        function displayTargetInputs(contestant) {
+            targetsContainer.innerHTML = '';
+            TARGETS.forEach(targetName => {
+                const score = contestant[COURSE_ID]?.targets?.[targetName] || '';
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label for="target-${targetName}" class="block text-gray-700 text-sm font-bold mb-1">${targetName}</label>
+                    <input type="number" id="target-${targetName}" data-target="${targetName}" class="target-input shadow-sm border rounded-lg w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${score}">
+                `;
+                targetsContainer.appendChild(div);
             });
             targetsContainer.classList.remove('hidden');
             summaryContainer.classList.remove('hidden');
@@ -104,15 +157,64 @@
         }
 
         function calculateTotal() {
-// ... existing code ... -->
-            if (selectedId) {
-                const selectedContestant = contestantsCache.find(c => c.id === selectedId);
-                displayTargetInputs(selectedContestant);
+            let total = 0;
+            const inputs = document.querySelectorAll('.target-input');
+            inputs.forEach(input => {
+                total += Number(input.value) || 0;
+            });
+            totalScoreEl.textContent = total;
+            if (total > 120) {
+                totalScoreEl.classList.add('text-red-500');
             } else {
-                targetsContainer.classList.add('hidden');
-                summaryContainer.classList.add('hidden');
-                saveScoreBtn.classList.add('hidden');
-                clearScoreBtn.classList.add('hidden');
+                totalScoreEl.classList.remove('text-red-500');
+            }
+        }
+
+        function resetScoringArea() {
+            targetsContainer.classList.add('hidden');
+            summaryContainer.classList.add('hidden');
+            saveScoreBtn.classList.add('hidden');
+            clearScoreBtn.classList.add('hidden');
+            selectedContestantIdInput.value = '';
+            contestantSearchInput.value = '';
+        }
+
+        // --- EVENT LISTENERS ---
+        contestantSearchInput.addEventListener('input', () => {
+            const searchTerm = contestantSearchInput.value.toLowerCase();
+            if (searchTerm.length === 0) {
+                contestantResultsContainer.classList.add('hidden');
+                return;
+            }
+            const filtered = contestantsCache.filter(c => c.name.toLowerCase().includes(searchTerm));
+            renderContestantResults(filtered);
+            contestantResultsContainer.classList.remove('hidden');
+        });
+
+        contestantSearchInput.addEventListener('focus', () => {
+            if (contestantSearchInput.value.length > 0) {
+                 contestantResultsContainer.classList.remove('hidden');
+            }
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!contestantSearchInput.contains(e.target) && !contestantResultsContainer.contains(e.target)) {
+                 contestantResultsContainer.classList.add('hidden');
+            }
+        });
+
+        contestantResultsContainer.addEventListener('click', (e) => {
+            const target = e.target.closest('div[data-id]');
+            if (target) {
+                const contestantId = target.dataset.id;
+                const contestantName = target.dataset.name;
+                
+                selectedContestantIdInput.value = contestantId;
+                contestantSearchInput.value = contestantName;
+                contestantResultsContainer.classList.add('hidden');
+                
+                const selectedContestant = contestantsCache.find(c => c.id === contestantId);
+                displayTargetInputs(selectedContestant);
             }
         });
         
@@ -128,6 +230,38 @@
 
         scoringForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const contestantId = contestantSelect.value;
-// ... existing code ... -->
+            const contestantId = selectedContestantIdInput.value;
+            if (!contestantId) {
+                alert("Please select a contestant first.");
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.target-input');
+            const targetScores = {};
+            let total = 0;
+            inputs.forEach(input => {
+                const score = Number(input.value) || 0;
+                targetScores[input.dataset.target] = score;
+                total += score;
+            });
+            
+            try {
+                const contestantRef = doc(db, "contestants", contestantId);
+                const updateData = {};
+                updateData[`${COURSE_ID}.targets`] = targetScores;
+                updateData[`${COURSE_ID}.total`] = total;
+                await updateDoc(contestantRef, updateData);
+                alert('Score saved successfully!');
+                resetScoringArea();
+            } catch (error) {
+                console.error("Error saving score:", error);
+                alert('Error saving score. Check console for details.');
+            }
+        });
+
+        // --- INITIAL LOAD ---
+        initializeFirebase();
+    </script>
+</body>
+</html>
 
