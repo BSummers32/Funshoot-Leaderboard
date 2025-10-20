@@ -107,16 +107,71 @@
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
         async function initializeFirebase() {
-            const firebaseConfig = {
-              apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
-              authDomain: "funshoot-leaderboard.firebaseapp.com",
-              projectId: "funshoot-leaderboard",
-              storageBucket: "funshoot-leaderboard.firebasestorage.app",
-              messagingSenderId: "1021423121559",
-              appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
-            };
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            const auth = getAuth(app);
+            try {
+                console.log("1. Initializing Firebase...");
+                const firebaseConfig = {
+                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+                  authDomain: "funshoot-leaderboard.firebaseapp.com",
+                  projectId: "funshoot-leaderboard",
+                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  messagingSenderId: "1021423121559",
+                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
+                };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                const auth = getAuth(app);
+                
+                console.log("2. Signing in anonymously...");
+                await signInAnonymously(auth);
+                console.log("3. Signed in successfully.");
+
+                contestantsCollectionRef = collection(db, "contestants");
+                
+                console.log("4. Attaching Firestore listener...");
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    console.log("5. Firestore listener fired! Data received.");
+                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderContestantList(contestants);
+                }, (error) => {
+                    console.error("Firestore listener error:", error);
+                });
+            } catch (error) {
+                 console.error("Firebase initialization failed:", error);
+            }
+        }
+
+        function renderContestantList(contestants) {
+// ... existing code ... -->
+            }
+        }
+
+        addContestantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("Add contestant form submitted.");
+            const nameInput = document.getElementById('contestant-name');
+            const name = nameInput.value.trim();
+            console.log(`Contestant name entered: "${name}"`);
+
+            if (name) {
+                try {
+                    console.log("Attempting to add document to Firestore...");
+                    const docRef = await addDoc(contestantsCollectionRef, {
+                        name: name,
+                        course1: { total: 0, targets: {} },
+                        course2: { total: 0, targets: {} }
+                    });
+                    console.log("Document written with ID: ", docRef.id);
+                    nameInput.value = ''; // Clear input for next time
+                    closeModal(addContestantModal);
+                } catch (error) {
+                    console.error("Error adding document: ", error);
+                }
+            } else {
+                console.log("Name is empty, not adding contestant.");
+            }
+        });
+
+        editContestantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 // ... existing code ... -->
 
