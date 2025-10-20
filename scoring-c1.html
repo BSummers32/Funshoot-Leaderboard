@@ -75,104 +75,21 @@
         import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         let db;
-        let contestantsCache = [];
-        const courseTargets = ["T1", "T2", "T3", "T4", "T5", "T6", "S1", "S2", "S3", "S4", "S5", "S6"];
-        
-        // DOM Elements
-        const contestantSelect = document.getElementById('contestant-select');
-        const scoreInputsContainer = document.getElementById('score-inputs');
-        const totalScoreEl = document.getElementById('total-score');
+// ... existing code ... -->
         const scoringForm = document.getElementById('scoring-form');
         const scoreInputs = document.querySelectorAll('.score-input');
 
         async function initializeFirebase() {
             const firebaseConfig = {
-              apiKey: "AIzaSyDZlvzG8wvxk2aUDYtbOuF8LaaJwoxjGS0",
-              authDomain: "funshoot-leaderboard-ec885.firebaseapp.com",
-              projectId: "funshoot-leaderboard-ec885",
-              storageBucket: "funshoot-leaderboard-ec885.appspot.com",
-              messagingSenderId: "189311770797",
-              appId: "1:189311770797:web:b0ca5ae83bf430a09e6624"
+              apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+              authDomain: "funshoot-leaderboard.firebaseapp.com",
+              projectId: "funshoot-leaderboard",
+              storageBucket: "funshoot-leaderboard.firebasestorage.app",
+              messagingSenderId: "1021423121559",
+              appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
             };
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             const auth = getAuth(app);
-            await signInAnonymously(auth);
-            
-            const contestantsCollectionRef = collection(db, "contestants");
-            onSnapshot(contestantsCollectionRef, (snapshot) => {
-                contestantsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                populateContestantDropdown(contestantsCache);
-            });
-        }
+// ... existing code ... -->
 
-        function populateContestantDropdown(contestants) {
-            const currentVal = contestantSelect.value;
-            contestantSelect.innerHTML = '<option value="">-- Select a Contestant --</option>';
-            contestants.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id;
-                option.textContent = c.name;
-                contestantSelect.appendChild(option);
-            });
-            contestantSelect.value = currentVal;
-        }
-        
-        async function loadScoresForContestant(id) {
-            scoringForm.reset();
-            const contestantRef = doc(db, "contestants", id);
-            const contestantSnap = await getDoc(contestantRef);
-            if (contestantSnap.exists()) {
-                const data = contestantSnap.data().course1;
-                if (data) {
-                    courseTargets.forEach(target => {
-                        const input = document.getElementById(`c1-${target}`);
-                        if (input) input.value = data[target] || '';
-                    });
-                }
-            }
-            calculateTotal();
-            scoreInputsContainer.classList.remove('hidden');
-        }
-        
-        function calculateTotal() {
-            let total = 0;
-            scoreInputs.forEach(input => {
-                total += parseInt(input.value, 10) || 0;
-            });
-            totalScoreEl.textContent = total;
-            totalScoreEl.classList.toggle('text-red-500', total > 120);
-            totalScoreEl.classList.toggle('brand-blue', total <= 120);
-        }
-
-        // Event Listeners
-        contestantSelect.addEventListener('change', (e) => {
-            if (e.target.value) {
-                loadScoresForContestant(e.target.value);
-            } else {
-                scoreInputsContainer.classList.add('hidden');
-            }
-        });
-
-        scoreInputs.forEach(input => input.addEventListener('input', calculateTotal));
-
-        scoringForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const contestantId = contestantSelect.value;
-            if (!contestantId) return alert('Please select a contestant.');
-
-            const course1Data = { total: 0 };
-            courseTargets.forEach(target => {
-                const val = parseInt(document.getElementById(`c1-${target}`).value, 10) || 0;
-                course1Data[target] = val;
-                course1Data.total += val;
-            });
-
-            await updateDoc(doc(db, "contestants", contestantId), { course1: course1Data });
-            alert(`${contestantSelect.options[contestantSelect.selectedIndex].text}'s score has been saved!`);
-        });
-
-        initializeFirebase();
-    </script>
-</body>
-</html>

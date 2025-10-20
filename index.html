@@ -106,77 +106,15 @@
         async function initializeFirebase() {
             try {
                 const firebaseConfig = {
-                  apiKey: "AIzaSyDZlvzG8wvxk2aUDYtbOuF8LaaJwoxjGS0",
-                  authDomain: "funshoot-leaderboard-ec885.firebaseapp.com",
-                  projectId: "funshoot-leaderboard-ec885",
-                  storageBucket: "funshoot-leaderboard-ec885.appspot.com",
-                  messagingSenderId: "189311770797",
-                  appId: "1:189311770797:web:b0ca5ae83bf430a09e6624"
+                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+                  authDomain: "funshoot-leaderboard.firebaseapp.com",
+                  projectId: "funshoot-leaderboard",
+                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  messagingSenderId: "1021423121559",
+                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
                 };
 
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
-                const auth = getAuth(app);
-                await signInAnonymously(auth);
-                
-                const contestantsCollectionRef = collection(db, "contestants");
-                
-                onSnapshot(contestantsCollectionRef, (snapshot) => {
-                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderLeaderboards(contestants);
-                    loader.style.display = 'none';
-                });
+// ... existing code ... -->
 
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                loader.innerHTML = "Error loading leaderboards. Check console for details.";
-            }
-        }
-
-        function renderLeaderboards(contestants) {
-            renderCourseLeaderboard('c1', contestants);
-            renderCourseLeaderboard('c2', contestants);
-        }
-
-        function renderCourseLeaderboard(courseKey, contestants) {
-            const leaderboardBody = document.getElementById(`leaderboard-body-${courseKey}`);
-            const courseDataKey = `course${courseKey.slice(-1)}`; // course1 or course2
-
-            const leaderboardData = contestants
-                .map(c => ({
-                    name: c.name,
-                    score: c[courseDataKey]?.total || 0,
-                }))
-                .sort((a, b) => b.score - a.score);
-
-            leaderboardBody.innerHTML = '';
-            if (leaderboardData.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="3" class="text-center p-6 text-gray-500">No contestants yet.</td></tr>`;
-                return;
-            }
-
-            leaderboardData.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200';
-
-                let rankDisplay;
-                switch(index) {
-                    case 0: rankDisplay = '&#129351;'; break; // Gold
-                    case 1: rankDisplay = '&#129352;'; break; // Silver
-                    case 2: rankDisplay = '&#129353;'; break; // Bronze
-                    default: rankDisplay = `<span class="font-bold text-gray-500">${index + 1}</span>`;
-                }
-                
-                row.innerHTML = `
-                    <td class="p-4 text-3xl font-bold text-center w-20">${rankDisplay}</td>
-                    <td class="p-4 text-xl text-gray-800 font-semibold">${player.name}</td>
-                    <td class="p-4 text-2xl brand-blue font-extrabold">${player.score}</td>
-                `;
-                leaderboardBody.appendChild(row);
-            });
-        }
-
-        initializeFirebase();
-    </script>
-</body>
-</html>

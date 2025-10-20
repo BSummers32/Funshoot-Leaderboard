@@ -103,117 +103,20 @@
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         let db;
-        let contestantsCollectionRef;
-        let contestantToDeleteId = null;
-
-        // DOM Elements
-        const contestantForm = document.getElementById('contestant-form');
-        const formTitle = document.getElementById('form-title');
-        const contestantIdInput = document.getElementById('contestant-id');
-        const contestantNameInput = document.getElementById('contestant-name');
-        const cancelEditBtn = document.getElementById('cancel-edit-btn');
-        const contestantListBody = document.getElementById('contestant-list-body');
-        const deleteModal = document.getElementById('delete-modal');
+// ... existing code ... -->
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
         async function initializeFirebase() {
             const firebaseConfig = {
-              apiKey: "AIzaSyDZlvzG8wvxk2aUDYtbOuF8LaaJwoxjGS0",
-              authDomain: "funshoot-leaderboard-ec885.firebaseapp.com",
-              projectId: "funshoot-leaderboard-ec885",
-              storageBucket: "funshoot-leaderboard-ec885.appspot.com",
-              messagingSenderId: "189311770797",
-              appId: "1:189311770797:web:b0ca5ae83bf430a09e6624"
+              apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+              authDomain: "funshoot-leaderboard.firebaseapp.com",
+              projectId: "funshoot-leaderboard",
+              storageBucket: "funshoot-leaderboard.firebasestorage.app",
+              messagingSenderId: "1021423121559",
+              appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
             };
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             const auth = getAuth(app);
-            await signInAnonymously(auth);
-            contestantsCollectionRef = collection(db, "contestants");
-            
-            onSnapshot(contestantsCollectionRef, (snapshot) => {
-                const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderContestantList(contestants);
-            });
-        }
+// ... existing code ... -->
 
-        function renderContestantList(contestants) {
-            contestantListBody.innerHTML = '';
-            if (contestants.length === 0) {
-                contestantListBody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No contestants added yet.</td></tr>`;
-                return;
-            }
-            contestants.forEach(c => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200';
-                row.innerHTML = `
-                    <td class="p-3 font-semibold">${c.name}</td>
-                    <td class="p-3 text-center">${c.course1?.total || 0}</td>
-                    <td class="p-3 text-center">${c.course2?.total || 0}</td>
-                    <td class="p-3 text-right space-x-2">
-                        <button class="edit-btn text-sm bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded" data-id="${c.id}" data-name="${c.name}">Edit</button>
-                        <button class="delete-btn text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded" data-id="${c.id}">Delete</button>
-                    </td>
-                `;
-                contestantListBody.appendChild(row);
-            });
-        }
-        
-        function resetForm() {
-            contestantForm.reset();
-            contestantIdInput.value = '';
-            formTitle.textContent = 'Add New Contestant';
-            cancelEditBtn.classList.add('hidden');
-        }
-        
-        // Event Listeners
-        contestantForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = contestantIdInput.value;
-            const name = contestantNameInput.value.trim();
-            if (!name) return;
-
-            if (id) { // Editing existing
-                await updateDoc(doc(db, "contestants", id), { name });
-            } else { // Adding new
-                await addDoc(contestantsCollectionRef, { 
-                    name, 
-                    course1: { total: 0 }, 
-                    course2: { total: 0 } 
-                });
-            }
-            resetForm();
-        });
-
-        cancelEditBtn.addEventListener('click', resetForm);
-        
-        contestantListBody.addEventListener('click', (e) => {
-            if (e.target.classList.contains('edit-btn')) {
-                formTitle.textContent = 'Edit Contestant';
-                contestantIdInput.value = e.target.dataset.id;
-                contestantNameInput.value = e.target.dataset.name;
-                cancelEditBtn.classList.remove('hidden');
-                window.scrollTo(0, 0);
-            }
-            if (e.target.classList.contains('delete-btn')) {
-                contestantToDeleteId = e.target.dataset.id;
-                deleteModal.classList.remove('hidden');
-            }
-        });
-
-        confirmDeleteBtn.addEventListener('click', async () => {
-            if (contestantToDeleteId) {
-                await deleteDoc(doc(db, "contestants", contestantToDeleteId));
-                contestantToDeleteId = null;
-                deleteModal.classList.add('hidden');
-            }
-        });
-        
-        deleteModal.querySelector('.modal-cancel').addEventListener('click', () => {
-            deleteModal.classList.add('hidden');
-        });
-
-        initializeFirebase();
-    </script>
-</body>
-</html>
