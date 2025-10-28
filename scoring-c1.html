@@ -79,11 +79,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, arrayUnion, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         let db;
         let contestantsCache = [];
-        const COURSE_ID = 'course1';
+        const COURSE_SCORES_FIELD = 'course1_scores'; // Updated field name
         const TARGETS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
 
         // DOM Elements
@@ -141,7 +141,8 @@
         function displayTargetInputs(contestant) {
             targetsContainer.innerHTML = '';
             TARGETS.forEach(targetName => {
-                const score = contestant[COURSE_ID]?.targets?.[targetName] || '';
+                // Always start with empty fields for a new score entry
+                const score = ''; 
                 const div = document.createElement('div');
                 div.innerHTML = `
                     <label for="target-${targetName}" class="block text-gray-700 text-sm font-bold mb-1">${targetName}</label>
@@ -214,7 +215,7 @@
                 contestantResultsContainer.classList.add('hidden');
                 
                 const selectedContestant = contestantsCache.find(c => c.id === contestantId);
-                displayTargetInputs(selectedContestant);
+                displayTargetInputs(selectedContestant); // Will display empty fields
             }
         });
         
@@ -245,12 +246,20 @@
                 total += score;
             });
             
+            // Create a new score object to add to the array
+            const newScoreEntry = {
+                total: total,
+                targets: targetScores,
+                timestamp: Timestamp.now()
+            };
+
             try {
                 const contestantRef = doc(db, "contestants", contestantId);
                 const updateData = {};
-                updateData[`${COURSE_ID}.targets`] = targetScores;
-                updateData[`${COURSE_ID}.total`] = total;
+                // Use arrayUnion to add the new score to the course's score array
+                updateData[COURSE_SCORES_FIELD] = arrayUnion(newScoreEntry);
                 await updateDoc(contestantRef, updateData);
+
                 alert('Score saved successfully!');
                 resetScoringArea();
             } catch (error) {
@@ -264,4 +273,3 @@
     </script>
 </body>
 </html>
-

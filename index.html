@@ -52,7 +52,11 @@
                 <p class="text-gray-500 mt-2 text-lg">Hosted by ShootSmart</p>
             </header>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div id="loader-container" class="flex justify-center items-center h-64">
+                <div class="loader"></div>
+            </div>
+            
+            <div id="leaderboards-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 hidden">
                 <!-- Course 1 Leaderboard -->
                 <div>
                     <h2 class="text-3xl font-bold brand-blue text-center mb-4">Course 1</h2>
@@ -100,7 +104,8 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const loader = document.getElementById('loader');
+        const loaderContainer = document.getElementById('loader-container');
+        const leaderboardsContainer = document.getElementById('leaderboards-container');
 
         async function initializeFirebase() {
             try {
@@ -129,15 +134,30 @@
                     console.log("5. Firestore listener fired! Data received.");
                     const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderLeaderboards(contestants);
-                    loader.style.display = 'none';
+                    loaderContainer.style.display = 'none';
+                    leaderboardsContainer.classList.remove('hidden');
                 }, (error) => {
                     console.error("Firestore listener error:", error);
+                    loaderContainer.innerHTML = "Error loading leaderboards. Check console for details.";
                 });
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                loader.innerHTML = "Error loading leaderboards. Check console for details.";
+                loaderContainer.innerHTML = "Error loading leaderboards. Check console for details.";
             }
+        }
+
+        /**
+         * Finds the highest score from an array of score entries.
+         * @param {Array<Object>} scoresArray - An array of score objects (e.g., [{total: 50}, {total: 60}])
+         * @returns {number} The highest total score, or 0 if empty.
+         */
+        function getBestScore(scoresArray) {
+            if (!scoresArray || scoresArray.length === 0) {
+                return 0;
+            }
+            // Use Math.max on an array of just the 'total' numbers
+            return Math.max(...scoresArray.map(entry => entry.total));
         }
 
         function renderLeaderboards(contestants) {
@@ -146,7 +166,10 @@
 
             // --- Course 1 ---
             const course1Data = contestants
-                .map(c => ({ name: c.name, score: c.course1?.total || 0 }))
+                .map(c => ({ 
+                    name: c.name, 
+                    score: getBestScore(c.course1_scores) // Get best score from the array
+                }))
                 .sort((a, b) => b.score - a.score);
 
             leaderboardBodyC1.innerHTML = '';
@@ -174,7 +197,10 @@
 
             // --- Course 2 ---
             const course2Data = contestants
-                .map(c => ({ name: c.name, score: c.course2?.total || 0 }))
+                .map(c => ({ 
+                    name: c.name, 
+                    score: getBestScore(c.course2_scores) // Get best score from the array
+                }))
                 .sort((a, b) => b.score - a.score);
 
             leaderboardBodyC2.innerHTML = '';
@@ -206,5 +232,3 @@
     </script>
 </body>
 </html>
-
-
