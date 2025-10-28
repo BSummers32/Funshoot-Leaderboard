@@ -32,6 +32,14 @@
         .brand-red { color: #B5343B; }
         .bg-brand-red { background-color: #B5343B; }
         .hover\:bg-brand-red-dark:hover { background-color: #8c282d; }
+        
+        /* For the details/summary dropdown */
+        details summary {
+            list-style: none; /* Remove default marker */
+        }
+        details summary::-webkit-details-marker {
+            display: none; /* Remove default marker in Chrome */
+        }
     </style>
 </head>
 <body class="bg-gray-200 text-gray-800">
@@ -145,17 +153,45 @@
         }
 
         /**
-         * Formats all scores into a string.
+         * Formats all scores into a dropdown.
          * @param {Array<Object>} scoresArray - An array of score objects
-         * @returns {string} A string like "50 / 60" or "N/A"
+         * @returns {string} HTML string for the cell
          */
-        function formatAllScores(scoresArray) {
+        function formatScoreDropdown(scoresArray) {
             if (!scoresArray || scoresArray.length === 0) {
                 return '<span class="text-gray-400">N/A</span>';
             }
-            // Sort by timestamp descending to show newest first
+
+            // Get the best score to display outside the dropdown
+            const bestScore = Math.max(...scoresArray.map(entry => entry.total));
+            
+            // If there's only one score, no need for a dropdown.
+            if (scoresArray.length === 1) {
+                return `<span class="font-semibold text-lg">${bestScore}</span>`;
+            }
+
+            // Sort by timestamp (newest first)
             const sortedScores = [...scoresArray].sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-            return sortedScores.map(entry => entry.total).join(' / ');
+            
+            const listItems = sortedScores.map(entry => {
+                const date = entry.timestamp ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : 'No date';
+                return `<li class="py-1 px-2 border-b border-gray-200 last:border-b-0">
+                            <span class_content="font-bold">${entry.total}</span>
+                            <span class="text-xs text-gray-500 block">${date}</span>
+                       </li>`;
+            }).join('');
+
+            return `
+                <span class="font-semibold text-lg">${bestScore}</span>
+                <details class="mt-1 relative">
+                    <summary class="text-xs text-blue-600 hover:underline cursor-pointer select-none">
+                        View all (${scoresArray.length})
+                    </summary>
+                    <ul class="absolute z-10 left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-md shadow-lg max-h-32 w-40 overflow-y-auto text-left">
+                        ${listItems}
+                    </ul>
+                </details>
+            `;
         }
 
         // --- FIREBASE SETUP ---
@@ -190,14 +226,24 @@
                 contestantListBody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">No contestants yet. Add one to get started!</td></tr>`;
                 return;
             }
-            const sortedContestants = [...contestants].sort((a, b) => a.name.localeCompare(b.name));
 
-            sortedContestants.forEach(c => {
+            // Map contestants to include their calculated best/combined scores, then sort
+            const sortedContestants = contestants.map(c => {
                 const bestC1 = getBestScore(c.course1_scores);
                 const bestC2 = getBestScore(c.course2_scores);
                 const combinedScore = bestC1 + bestC2;
-                const allC1Scores = formatAllScores(c.course1_scores);
-                const allC2Scores = formatAllScores(c.course2_scores);
+                return {
+                    ...c, // Spread the original contestant data
+                    bestC1,
+                    bestC2,
+                    combinedScore 
+                };
+            }).sort((a, b) => b.combinedScore - a.combinedScore); // Sort descending by combinedScore
+
+
+            sortedContestants.forEach(c => {
+                const allC1Scores = formatScoreDropdown(c.course1_scores);
+                const allC2Scores = formatScoreDropdown(c.course2_scores);
                 
                 const row = document.createElement('tr');
                 row.className = 'border-b border-gray-200';
@@ -205,7 +251,7 @@
                     <td class="p-3 font-semibold">${c.name}</td>
                     <td class="p-3 text-center">${allC1Scores}</td>
                     <td class="p-3 text-center">${allC2Scores}</td>
-                    <td class="p-3 text-center font-bold brand-blue text-lg">${combinedScore}</td>
+                    <td class="p-3 text-center font-bold brand-blue text-lg">${c.combinedScore}</td>
                     <td class="p-3 text-right">
                         <button class="edit-btn text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold py-1 px-3 rounded-lg" data-id="${c.id}">Edit</button>
                         <button class="delete-btn text-sm bg-red-100 text-red-700 hover:bg-red-200 font-semibold py-1 px-3 rounded-lg ml-2" data-id="${c.id}">Delete</button>
@@ -266,6 +312,12 @@
 
         contestantListBody.addEventListener('click', (e) => {
             const target = e.target;
+            
+            // Check if the click is on a summary element to prevent edit/delete
+            if (target.closest('details')) {
+                return;
+            }
+
             const contestantId = target.dataset.id;
 
             if (target.classList.contains('edit-btn')) {
@@ -304,3 +356,4 @@
     </script>
 </body>
 </html>
+
