@@ -50,8 +50,10 @@
             <header class="text-center mb-6 border-b pb-6 border-gray-200">
                 <h1 class="text-4xl sm:text-5xl font-bold brand-blue">Admin Panel</h1>
                 <p class="text-gray-500 mt-2 text-lg">Manage Contestants</p>
+                <!-- MODIFIED NAVIGATION -->
                 <nav class="mt-4 space-x-4">
-                    <a href="./index.html" class="text-blue-600 hover:underline">Main Display</a>
+                    <a href="./index.html" class="text-blue-600 hover:underline">Split Display</a>
+                    <a href="./combined_leaderboard.html" class="text-blue-600 hover:underline">Combined Display</a>
                     <a href="./scoring-c1.html" class="text-blue-600 hover:underline">Score Course 1</a>
                     <a href="./scoring-c2.html" class="text-blue-600 hover:underline">Score Course 2</a>
                 </nav>
@@ -186,7 +188,7 @@
                 <details class="mt-1 relative">
                     <summary class="text-xs text-blue-600 hover:underline cursor-pointer select-none">
                         View all (${scoresArray.length})
-                    </summary>
+                    </A>
                     <ul class="absolute z-10 left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-md shadow-lg max-h-32 w-40 overflow-y-auto text-left">
                         ${listItems}
                     </ul>
@@ -200,8 +202,7 @@
                 const firebaseConfig = {
                   apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
                   authDomain: "funshoot-leaderboard.firebaseapp.com",
-                  projectId: "funshoot-leaderboard",
-                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  projectId: "funshoot-leaderband.firebasestorage.app",
                   messagingSenderId: "1021423121559",
                   appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
                 };
