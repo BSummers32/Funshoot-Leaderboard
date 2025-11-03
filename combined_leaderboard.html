@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Leaderboard - Funshoot</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='gold' stroke='%23B5343B' stroke-width='1'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6m12 0h-1.5a2.5 2.5 0 0 0 0 5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22m7-7.34V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22M18 2H6v7c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V2Z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Add html2canvas library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif;
+            background-image: url('./Target Pattern Blue.png'); /* This will only work if the image is in the same folder */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #003A70; /* Fallback color */
+        }
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+        }
+        .brand-blue { color: #003A70; }
+        .brand-red { color: #B5343B; }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #003A70;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-200 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Add an ID to the main container for easy selection -->
+        <div class="main-container relative rounded-2xl shadow-2xl p-6 md:p-8 max-w-4xl mx-auto" id="leaderboard-content">
+            
+            <a href="./admin.html" title="Admin Page" class="absolute top-4 right-4 text-gray-400 hover:text-brand-blue transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-4.44a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.38"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+
+            <header class="text-center mb-6 border-b pb-6 border-gray-200">
+                <h1 class="text-4xl sm:text-5xl font-bold brand-blue">Funshoot Leaderboard</h1>
+                <p class="text-gray-500 mt-2 text-lg">Hosted by ShootSmart</p>
+                <nav class="mt-4 space-x-4">
+                    <a href="./index.html" class="text-blue-600 hover:underline">Split Leaderboards</a>
+                    <a href="./admin.html" class="text-blue-600 hover:underline">Admin</a>
+                    <!-- Add Export Button -->
+                    <button id="export-png-btn" class="bg-brand-blue hover:bg-brand-blue-dark text-white font-bold py-2 px-4 rounded-lg">
+                        Export as PNG
+                    </button>
+                </nav>
+            </header>
+            
+            <div id="loader-container" class="flex justify-center items-center h-64">
+                <div class="loader"></div>
+            </div>
+            
+            <div id="leaderboard-container" class="hidden">
+                <!-- Combined Leaderboard -->
+                <div>
+                    <h2 class="text-3xl font-bold brand-blue text-center mb-4">Overall Combined Score</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-transparent">
+                            <thead class="border-b-2 border-gray-300">
+                                <tr>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left w-20">Rank</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Contestant</th>
+                                    <th class="p-4 text-base font-semibold tracking-wider text-left">Combined Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body-combined">
+                                <!-- Dynamic content for Combined Scores -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const loaderContainer = document.getElementById('loader-container');
+        const leaderboardContainer = document.getElementById('leaderboard-container');
+
+        async function initializeFirebase() {
+            try {
+                // This config is from your other files
+                const firebaseConfig = {
+                  apiKey: "AIzaSyAkwDY-JG-nPa0zZJDcY-3Xa0V7-QlSbmM",
+                  authDomain: "funshoot-leaderboard.firebaseapp.com",
+                  projectId: "funshoot-leaderboard",
+                  storageBucket: "funshoot-leaderboard.firebasestorage.app",
+                  messagingSenderId: "1021423121559",
+                  appId: "1:1021423121559:web:f97e3975cc96537924a5d2"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+
+                await signInAnonymously(auth);
+                
+                const contestantsCollectionRef = collection(db, "contestants");
+                
+                onSnapshot(contestantsCollectionRef, (snapshot) => {
+                    const contestants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderLeaderboard(contestants);
+                    loaderContainer.style.display = 'none';
+                    leaderboardContainer.classList.remove('hidden');
+                }, (error) => {
+                    console.error("Firestore listener error:", error);
+                    loaderContainer.innerHTML = "Error loading leaderboard. Check console for details.";
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                loaderContainer.innerHTML = "Error loading leaderboard. Check console for details.";
+            }
+        }
+
+        // --- EXPORT PNG LOGIC ---
+        const exportBtn = document.getElementById('export-png-btn');
+        const leaderboardContentEl = document.getElementById('leaderboard-content');
+
+        exportBtn.addEventListener('click', () => {
+            const adminLink = leaderboardContentEl.querySelector('a[href="./admin.html"]');
+            
+            // Get the position and size of the leaderboard container
+            const { width, height, x, y } = leaderboardContentEl.getBoundingClientRect();
+
+            // Use html2canvas to capture the body, but crop to the leaderboard element
+            html2canvas(document.body, {
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#003A70', // Set background color for the canvas
+                width: width,     // Crop width
+                height: height,   // Crop height
+                x: x,             // Crop x-position
+                y: y,             // Crop y-position
+                onclone: (clonedDoc) => {
+                    // Find and hide the buttons in the *cloned* document for the screenshot
+                    const clonedExportBtn = clonedDoc.getElementById('export-png-btn');
+                    if (clonedExportBtn) clonedExportBtn.style.display = 'none';
+                    
+                    const clonedAdminLink = clonedDoc.querySelector('a[href="./admin.html"]');
+                    if (clonedAdminLink) clonedAdminLink.style.display = 'none';
+                }
+            }).then(canvas => {
+                // Create a temporary link to trigger the download
+                const link = document.createElement('a');
+                link.download = 'funshoot-leaderboard.png';
+                link.href = canvas.toDataURL('image/png');
+                
+                // Trigger download
+                link.click();
+
+            }).catch(err => {
+                console.error("Error exporting PNG:", err);
+            });
+        });
+
+
+        /**
+         * Finds the highest score from an array of score entries.
+         * (From admin.html and index.html)
+         * @param {Array<Object>} scoresArray - An array of score objects (e.g., [{total: 50}, {total: 60}])
+         * @returns {number} The highest total score, or 0 if empty.
+         */
+        function getBestScore(scoresArray) {
+            if (!scoresArray || scoresArray.length === 0) {
+                return 0;
+            }
+            // Use Math.max on an array of just the 'total' numbers
+            return Math.max(...scoresArray.map(entry => entry.total));
+        }
+
+        function renderLeaderboard(contestants) {
+            const leaderboardBodyCombined = document.getElementById('leaderboard-body-combined');
+
+            // --- Combined Score Logic (From admin.html) ---
+            const combinedData = contestants
+                .map(c => {
+                    const bestC1 = getBestScore(c.course1_scores);
+                    const bestC2 = getBestScore(c.course2_scores);
+                    const combinedScore = bestC1 + bestC2;
+                    return { 
+                        name: c.name, 
+                        combinedScore: combinedScore
+                    };
+                })
+                .sort((a, b) => b.combinedScore - a.combinedScore); // Sort by combined score, highest first
+
+            leaderboardBodyCombined.innerHTML = '';
+            if (combinedData.length === 0) {
+                leaderboardBodyCombined.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-gray-500">No scores yet.</td></tr>`;
+            } else {
+                combinedData.forEach((player, index) => {
+                    // Filter out players with a 0 combined score
+                    if (player.combinedScore === 0) return;
+
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200';
+                    
+                    // Get Rank display (from index.html)
+                    let rankDisplay;
+                    switch(index) {
+                        case 0: rankDisplay = '&#129351;'; break; // Gold
+                        case 1: rankDisplay = '&#129352;'; break; // Silver
+                        case 2: rankDisplay = '&#129353;'; break; // Bronze
+                        default: rankDisplay = `<span class="font-bold text-gray-500">${index + 1}</span>`;
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="p-4 text-3xl font-bold text-center w-20">${rankDisplay}</td>
+                        <td class="p-4 text-lg text-gray-800 font-semibold">${player.name}</td>
+                        <td class="p-4 text-xl brand-blue font-extrabold">${player.combinedScore}</td>
+                    `;
+                    leaderboardBodyCombined.appendChild(row);
+                });
+            }
+        }
+
+        // Initial Load
+        initializeFirebase();
+    </script>
+</body>
+</html>
+
